@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 
 class KotlinBytecodeTargetPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
-        val jvmTarget = properties.getOrDefault("dev.tilbrook.kotlin.bytecodeTarget", "11")
+        val jvmTarget = properties.getOrDefault("dev.tilbrook.kotlin.bytecodeTarget", "17")
             .toString()
             .let { JavaVersion.toVersion(it) }
 
