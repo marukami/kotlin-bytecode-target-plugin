@@ -2,8 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     `kotlin-dsl`
-    `java-gradle-plugin`
-    `maven-publish`
+    alias(libs.plugins.gradle.plugin.publish)
 }
 
 group = "dev.tilbrook"
@@ -21,8 +20,8 @@ dependencies {
 
 @Suppress("UnstableApiUsage")
 gradlePlugin {
-    website = "https://github.com/maruakmi/kotlin-jdk-target"
-    vcsUrl = "https://github.com/maruakmi/kotlin-jdk-target"
+    website = "https://github.com/marukami/kotlin-bytecode-target-plugin"
+    vcsUrl = "https://github.com/marukami/kotlin-bytecode-target-plugin"
     plugins {
         create("KotlinJvmTarget") {
             id = "dev.tilbrook.kotlin.bytecode-target"
