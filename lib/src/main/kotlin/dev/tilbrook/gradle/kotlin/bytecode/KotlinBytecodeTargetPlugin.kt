@@ -1,16 +1,17 @@
 package dev.tilbrook.gradle.kotlin.bytecode
 
 import com.android.build.api.dsl.ApplicationExtension
-import com.android.build.api.dsl.LibraryExtension
 import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 class KotlinBytecodeTargetPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -33,11 +34,11 @@ class KotlinBytecodeTargetPlugin : Plugin<Project> {
     }
 
     private fun jvmTarget(project: Project, javaVersion: JavaVersion) {
-        project.tasks.withType<KotlinCompile<KotlinJvmOptions>> {
+        project.tasks.withType<KotlinCompilationTask<KotlinJvmCompilerOptions>> {
             project.logger.info("Configuring kotlin jdk-target with $javaVersion")
-            kotlinOptions {
-                freeCompilerArgs += listOf("-Xjdk-release=$javaVersion")
-                jvmTarget = javaVersion.toString()
+            compilerOptions {
+                freeCompilerArgs.addAll("-Xjdk-release=$javaVersion")
+                jvmTarget.set(JvmTarget.valueOf("JVM_${javaVersion.majorVersion}"))
             }
         }
 
@@ -51,9 +52,9 @@ class KotlinBytecodeTargetPlugin : Plugin<Project> {
 
     private inline fun <reified T : CommonExtension<*, *, *, *, *, *>> androidTarget(project: Project, javaVersion: JavaVersion) {
         project.logger.info("Configuring android source & target compatibility with jdk $javaVersion")
-        project.tasks.withType<KotlinCompile<KotlinJvmOptions>> {
-            kotlinOptions {
-                noJdk = false
+        project.tasks.withType<KotlinCompilationTask<KotlinJvmCompilerOptions>> {
+            compilerOptions {
+              noJdk.set(false)
             }
         }
         project.extensions.configure<T> {

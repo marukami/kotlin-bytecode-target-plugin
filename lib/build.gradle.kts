@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
@@ -48,7 +49,9 @@ tasks.withType<PluginUnderTestMetadata>().configureEach {
 
 val javaVersion = JavaVersion.VERSION_17
 tasks.withType(KotlinJvmCompile::class.java).configureEach {
-    kotlinOptions.jvmTarget = javaVersion.toString()
+    compilerOptions {
+        jvmTarget = JvmTarget.valueOf("JVM_${javaVersion.majorVersion}")
+    }
 }
 // Kotlin requires the Java compatibility matches despite have no sources.
 tasks.withType(JavaCompile::class.java).configureEach {
