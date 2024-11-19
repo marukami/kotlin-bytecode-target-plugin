@@ -4,6 +4,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -40,8 +41,8 @@ class JdkTargetTest {
       """
         android {
           namespace = "dev.tilbrook.mylibrary"
-          compileSdk = 34
-        
+          compileSdk = 35
+
           defaultConfig {
             minSdk = 24
           }
@@ -56,13 +57,45 @@ class JdkTargetTest {
     println(result.output)
 
     val bytecode = readBytecode(isAndroid = true)
-    assertRemoveFirst(bytecode, javaVersion, isAndroid = true)
+    assertRemoveFirst(bytecode, javaVersion)
   }
 
   @Test
-  fun `android targeting java21 using JDK21 emit Kotlin removeFirst`() {
+  fun `android targeting java21 using JDK21 emit Java removeFirst`() {
     val gradleVersion = GradleVersion.version("8.7")
     val javaVersion = JavaVersion.VERSION_21
+    setBytecodeTarget(javaVersion)
+    build(
+      listOf(
+        "com.android.library",
+        "org.jetbrains.kotlin.android",
+      ),
+      """
+        android {
+          namespace = "dev.tilbrook.mylibrary"
+          compileSdk = 35
+
+          defaultConfig {
+            minSdk = 24
+          }
+        }
+      """.trimIndent()
+    )
+
+    val result = runner(gradleVersion) {
+      withArguments("--info", "assembleDebug")
+    }.build()
+
+    println(result.output)
+
+    val bytecode = readBytecode(isAndroid = true)
+    assertRemoveFirst(bytecode, javaVersion)
+  }
+
+  @Test
+  fun `android targeting java17, using compileSDK 34 and using JDK21 emit Kotlin removeFirst`() {
+    val gradleVersion = GradleVersion.version("8.7")
+    val javaVersion = JavaVersion.VERSION_17
     setBytecodeTarget(javaVersion)
     build(
       listOf(
@@ -88,7 +121,7 @@ class JdkTargetTest {
     println(result.output)
 
     val bytecode = readBytecode(isAndroid = true)
-    assertRemoveFirst(bytecode, javaVersion, isAndroid = true)
+    assertRemoveFirst(bytecode, javaVersion, removeSource = RemoveSource.Kotlin)
   }
 
   @Test
@@ -160,9 +193,20 @@ class JdkTargetTest {
     return file.readText().also { println("bytecode:\n$it") }
   }
 
-  private fun assertRemoveFirst(bytecode: String, javaVersion: JavaVersion, isAndroid: Boolean = false) {
-    val isCollectionKt = javaVersion < JavaVersion.VERSION_21
-    if (isAndroid || isCollectionKt) {
+  enum class RemoveSource {
+    Kotlin,
+    Java,
+    ;
+  }
+
+  private fun assertRemoveFirst(
+    bytecode: String,
+    javaVersion: JavaVersion,
+    removeSource: RemoveSource =
+      if (javaVersion < JavaVersion.VERSION_21) RemoveSource.Kotlin else RemoveSource.Java
+  ) {
+    val isCollectionKt = removeSource == RemoveSource.Kotlin
+    if (isCollectionKt) {
       assert(bytecode.contains("kotlin/collections/CollectionsKt.removeFirst:(Ljava/util/List;)Ljava/lang/Object;"))
       assert(!bytecode.contains("InterfaceMethod java/util/List.removeFirst:()Ljava/lang/Object;"))
     } else {
